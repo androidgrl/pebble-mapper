@@ -7,8 +7,8 @@ class DirectionController < ApplicationController
     response = client.get("https://maps.googleapis.com/maps/api/directions/json?mode=bicycling&origin=#{lat},#{lon}&destination=835+Walnut+Street+Boulder+CO&key=#{Figaro.env.google_key}")
     parsed = JSON.parse(response.body)
     first_direction = parsed["routes"][0]["legs"][0]["steps"][0]["distance"]
-    first_distance = first_direction["text"].split(" ").first.to_i
-    if first_distance < 200
+    first_distance = first_direction["value"].to_i
+    if first_distance < 100
       second_direction = parsed["routes"][0]["legs"][0]["steps"][1]["html_instructions"]
       if second_direction[/left/]
         render json: { direction: "left", distance: first_distance }.to_json
