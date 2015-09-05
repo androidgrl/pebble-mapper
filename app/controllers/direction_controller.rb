@@ -1,21 +1,22 @@
 class DirectionController < ApplicationController
   def show
-    latlon = params[:latlon].split(",")
+    latlon = params[:latlon].gsub("p",".").split("&")
     lat = latlon[0]
     lon = latlon[1]
-    puts latlon
     client = Hurley::Client.new
     response = client.get("https://maps.googleapis.com/maps/api/directions/json?mode=bicycling&origin=#{lat},#{lon}&destination=835+Walnut+Street+Boulder+CO&key=#{Figaro.env.google_key}")
     parsed = JSON.parse(response.body)
-    #direction = parsed["routes"][0]["legs"][0]["steps"][0]["html_instructions"]
-    direction = parsed["routes"][0]["legs"][0]["steps"]
-    render json: direction
-    #if direction[/left/]
-      #render json: "left"
-    #elsif direction[/right/]
-      #render json: "right"
-    #else
-      #render json: "center"
-    #end
+    first_direction = parsed["routes"][0]["legs"][0]["steps"][0]["distance"]
+    first_distance = first_direction["text"].split(" ").first.to_i
+    if first_distance < 200
+      second_direction = parsed["routes"][0]["legs"][0]["steps"][1]["html_instructions"]
+      if second_direction[/left/]
+        render json: { direction: "left", distance: first_distance }.to_json
+      elsif second_direction[/right/]
+        render json: { direction: "right", distance: first_distance }.to_json
+      end
+    else
+      render json: { direction: "center", distance: first_distance }.to_json
+    end
   end
 end
